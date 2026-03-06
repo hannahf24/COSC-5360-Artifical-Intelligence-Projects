@@ -5,7 +5,7 @@ import seaborn as sns
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
 
 # Load Training Data 
@@ -65,9 +65,59 @@ xTrain, xTest, yTrain, yTest = train_test_split(x, y, test_size=0.2, random_stat
 print("Train Size: ", len(xTrain), "Test Size: ", len(xTest))
 print("Train Approved Rate: ", yTrain.mean(), "Test Approved Rate: ", yTest.mean())
 
-# Algorithms Setup
+# Classification Models
 models={
     'Logistic Regression': LogisticRegression(max_iter=1000, random_state=42),
     'Random Forest': RandomForestClassifier(n_estimators=100, random_state=42),
     'Support Vector Machine': SVC(kernel='rbf', random_state=42)
 }
+
+for name, model in models.items():
+    scores= cross_val_score(model, xTrain, yTrain, cv=5, scoring='accuracy')
+    print(f'{name} CV Accuracy: {scores.mean():.4f} (+/- {scores.std():.4f})')
+
+lr= LogisticRegression(max_iter=1000)
+lr.fit(xTrain, yTrain)
+lrPred= lr.predict(xTest)
+
+rf= RandomForestClassifier(n_estimators=100, random_state=42)
+rf.fit(xTrain, yTrain)
+rfPred= rf.predict(xTest)
+
+svm= SVC(kernel='rbf', random_state=42)
+svm.fit(xTrain, yTrain) 
+svmPred= svm.predict(xTest)
+
+# Performance Evaluation
+print("\n\nModel Comparison:")
+print("Logistic Regression Accuracy: ", accuracy_score(yTest, lrPred))
+print("Random Forest Accuracy: ", accuracy_score(yTest, rfPred))
+print("Support Vector Machine Accuracy: ", accuracy_score(yTest, svmPred))
+
+print("\n\Classification Report:")
+print("Logistic Regression:\n", classification_report(yTest, lrPred))
+print("Random Forest:\n", classification_report(yTest, rfPred)) 
+print("Support Vector Machine:\n", classification_report(yTest, svmPred))
+
+print("\nConfusion Matrix:")
+print("Logistic Regression:\n", confusion_matrix(yTest, lrPred))
+print("Random Forest:\n", confusion_matrix(yTest, rfPred))
+print("Support Vector Machine:\n", confusion_matrix(yTest, svmPred))
+
+#Predict on Test Data
+xTestFinal= testData[important_features]
+
+testPred= lr.predict(xTestFinal)
+lrPredFinal= pd.DataFrame({'Title': testData['Title'], 'Artist': testData['Artist'], 'Predicted Popularity': testPred})
+lrPredFinal.to_csv('lr_predictions.csv', index=False)
+print("\nLogistic Regression Predictions:\n", lrPredFinal)
+
+testPred= rf.predict(xTestFinal)
+rfPredFinal= pd.DataFrame({'Title': testData['Title'], 'Artist': testData['Artist'], 'Predicted Popularity': testPred})
+rfPredFinal.to_csv('rf_predictions.csv', index=False)
+print("\nRandom Forest Predictions:\n", rfPredFinal)
+
+testPred= svm.predict(xTestFinal)
+svmPredFinal= pd.DataFrame({'Title': testData['Title'], 'Artist': testData['Artist'], 'Predicted Popularity': testPred})
+svmPredFinal.to_csv('svm_predictions.csv', index=False)
+print("\nSVM Predictions:\n", svmPredFinal)
