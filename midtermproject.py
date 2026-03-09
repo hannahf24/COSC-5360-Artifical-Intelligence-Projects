@@ -15,7 +15,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.model_selection import cross_val_score, train_test_split
-from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, ConfusionMatrixDisplay
+from sklearn.datasets import make_classification
 
 # Load Training Data
 trainData= pd.read_csv('1990songs_trained_dataset.csv')
@@ -99,19 +100,19 @@ svmPred= svm.predict(xTest)
 
 # Performance Evaluation
 print("\n\nModel Comparison:")
-print("Logistic Regression Accuracy: ", accuracy_score(yTest, lrPred))
-print("Random Forest Accuracy: ", accuracy_score(yTest, rfPred))
-print("Support Vector Machine Accuracy: ", accuracy_score(yTest, svmPred))
+print(" Logistic Regression Accuracy: ", accuracy_score(yTest, lrPred))
+print(" Random Forest Accuracy: ", accuracy_score(yTest, rfPred))
+print(" Support Vector Machine Accuracy: ", accuracy_score(yTest, svmPred))
 
-print("\n\Classification Report:")
-print("Logistic Regression:\n", classification_report(yTest, lrPred))
-print("Random Forest:\n", classification_report(yTest, rfPred))
-print("Support Vector Machine:\n", classification_report(yTest, svmPred))
+print("\nClassification Report:")
+print(" Logistic Regression:\n", classification_report(yTest, lrPred))
+print(" Random Forest:\n", classification_report(yTest, rfPred))
+print(" Support Vector Machine:\n", classification_report(yTest, svmPred))
 
 print("\nConfusion Matrix:")
-print("Logistic Regression:\n", confusion_matrix(yTest, lrPred))
-print("Random Forest:\n", confusion_matrix(yTest, rfPred))
-print("Support Vector Machine:\n", confusion_matrix(yTest, svmPred))
+print(" Logistic Regression:\n", confusion_matrix(yTest, lrPred))
+print(" Random Forest:\n", confusion_matrix(yTest, rfPred))
+print(" Support Vector Machine:\n", confusion_matrix(yTest, svmPred))
 
 #Predict on Test Data
 xTestFinal= testData[important_features]
@@ -262,6 +263,98 @@ accuracyscoresOne != accuracyscoresTwo
 
 compareaccuracyscores = pd.merge(accuracyscoresOne, accuracyscoresTwo, on='Model')
 print (compareaccuracyscores)
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+plt.suptitle('Comparison of Accuracy Scores')
+for i, model_name in enumerate(['Logistic Regression', 'Random Forest', 'Support Vector Machine']):
+      plt.subplot(1, 3, i + 1)
+      # Extract the accuracy score for the current model from each DataFrame
+      accuracy_a = accuracyscoresOne.loc[accuracyscoresOne['Model'] == model_name, 'Accuracy Score'].iloc[0]
+      accuracy_b = accuracyscoresTwo.loc[accuracyscoresTwo['Model'] == model_name, 'Accuracy Score'].iloc[0]
+      plt.bar(['Dataset A', 'Dataset B'],[accuracy_a, accuracy_b])
+      plt.title(f'Accuracy Score - {model_name}')
+      plt.ylim(0, 1)
+      plt.tight_layout()
+plt.show()
+
+# Comparing classification report
+datasets = {'Dataset_A': (xTest, yTest), 'Dataset_B': (xTest2, yTest2)}
+models_preds = {'Logistic Regression': (lrPred, lrPred2), 'Random Forest': (rfPred, rfPred2), 'SVM': (svmPred, svmPred2)}
+
+# Function to get classification report as a dictionary
+def get_classification_report_dict(y_true, y_pred):
+    return classification_report(y_true, y_pred, output_dict=True)
+
+# --- Process for Dataset A (1990s songs) ---
+reports_A = []
+for m_name, (pred_for_A, _) in models_preds.items():
+    report_dict = get_classification_report_dict(yTest, pred_for_A)
+    # Extract macro avg for comparison
+    macro_avg = report_dict['macro avg']
+    reports_A.append({
+        'Model': m_name,
+        'Precision_A': macro_avg['precision'],
+        'Recall_A': macro_avg['recall'],
+        'F1-Score_A': macro_avg['f1-score'],
+        'Support_A': macro_avg['support']
+    })
+df_report_A = pd.DataFrame(reports_A)
+
+# --- Process for Dataset B (2020s songs) ---
+reports_B = []
+for m_name, (_, pred_for_B) in models_preds.items():
+    report_dict = get_classification_report_dict(yTest2, pred_for_B)
+    macro_avg = report_dict['macro avg']
+    reports_B.append({
+        'Model': m_name,
+        'Precision_B': macro_avg['precision'],
+        'Recall_B': macro_avg['recall'],
+        'F1-Score_B': macro_avg['f1-score'],
+        'Support_B': macro_avg['support']
+    })
+df_report_B = pd.DataFrame(reports_B)
+
+# Merge the two dataframes for comparison
+comparison_classification_report = pd.merge(df_report_A, df_report_B, on='Model', how='inner')
+
+print("\nComparison of Macro Average Classification Report Metrics:")
+print(comparison_classification_report)
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+plt.suptitle('Comparison of Macro Average Classification Report Metrics')
+for i, model_name in enumerate(['Logistic Regression', 'Random Forest', 'SVM']):
+    precision_a_value = comparison_classification_report.loc[comparison_classification_report['Model'] == model_name, 'Precision_A'].iloc[0]
+    precision_b_value = comparison_classification_report.loc[comparison_classification_report['Model'] == model_name, 'Precision_B'].iloc[0]
+    axes[i].bar(['Dataset A', 'Dataset B'], [precision_a_value, precision_b_value])
+    axes[i].set_title(f'Precision - {model_name}')
+    axes[i].set_ylim(0, 1)
+plt.tight_layout()
+plt.show()
+
+from sklearn.preprocessing import normalize
+confusionMatrixOne = pd.DataFrame({
+    'Model': ['Logistic Regression', 'Random Forest', 'Support Vector Machine'],
+    'Confusion Matrix': [confusion_matrix(yTest, lrPred), confusion_matrix(yTest, rfPred), confusion_matrix(yTest, svmPred)]})
+
+print(confusionMatrixOne)
+
+confusionMatrixTwo = pd.DataFrame({
+    'Model': ['Logistic Regression', 'Random Forest', 'Support Vector Machine'],
+    'Confusion Matrix': [confusion_matrix(yTest2, lrPred2), confusion_matrix(yTest2, rfPred2), confusion_matrix(yTest2, svmPred2)]})
+print(confusionMatrixTwo)
+
+fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+for i, model in enumerate(['Logistic Regression', 'Random Forest', 'Support Vector Machine']):
+    disp = ConfusionMatrixDisplay(confusion_matrix=confusionMatrixOne.loc[confusionMatrixOne['Model'] == model, 'Confusion Matrix'].values[0], display_labels=['0', '1'])
+    disp.plot(ax=axes[i], cmap=plt.cm.Greens)
+    axes[i].set_title('model 1')
+
+for i, model in enumerate(['Logistic Regression', 'Random Forest', 'Support Vector Machine']):
+    disp = ConfusionMatrixDisplay(confusion_matrix=confusionMatrixTwo.loc[confusionMatrixTwo['Model'] == model, 'Confusion Matrix'].values[0], display_labels=['0', '1'])
+    disp.plot(ax=axes[i], cmap=plt.cm.Reds)
+    axes[i].set_title('model 2')
+plt.tight_layout()
+plt.show()
 
 
 
