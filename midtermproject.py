@@ -338,3 +338,51 @@ for i, model_name in enumerate(['Logistic Regression', 'Random Forest', 'SVM']):
     axes[i].set_ylim(0, 1)
 plt.tight_layout()
 plt.show()
+
+import matplotlib.pyplot as plt
+from sklearn.metrics import ConfusionMatrixDisplay
+
+#comparing confusion metrix
+confusion_matrix_A = confusion_matrix(yTest, lrPred)
+confusion_matrix_B = confusion_matrix(yTest2, lrPred2)
+confusion_matrix_C = confusion_matrix(yTest, rfPred)
+confusion_matrix_D = confusion_matrix(yTest2, rfPred2)
+confusion_matrix_E = confusion_matrix(yTest, svmPred)
+confusion_matrix_F = confusion_matrix(yTest2, svmPred2)
+
+fig, axes = plt.subplots(1, 6, figsize=(27, 5))
+plt.suptitle('Comparison of Confusion Matrices')
+
+# Plot Confusion Matrix for Dataset A
+disp_A = ConfusionMatrixDisplay(confusion_matrix=confusion_matrix_A)
+disp_A.plot(cmap='Reds', ax=axes[0])
+axes[0].set_title('Confusion Matrix - Dataset A (Linear Regression) (1990s)')
+
+# Plot Confusion Matrix for Dataset B
+disp_B = ConfusionMatrixDisplay(confusion_matrix=confusion_matrix_B)
+disp_B.plot(cmap='Greens', ax=axes[1])
+axes[1].set_title('Confusion Matrix - Dataset B (Linear Regression) (2020s)')
+
+# Plot Confusion Matrix for Dataset C
+disp_C = ConfusionMatrixDisplay(confusion_matrix=confusion_matrix_C)
+disp_C.plot(cmap='Reds', ax=axes[2])
+axes[2].set_title('Confusion Matrix - Dataset C (Random Forest) (1990s)')
+
+# Plot Confusion Matrix for Dataset D
+disp_D = ConfusionMatrixDisplay(confusion_matrix=confusion_matrix_D)
+disp_D.plot(cmap='Greens', ax=axes[3])
+axes[3].set_title('Confusion Matrix - Dataset D (Random Forest) (2020s)')
+
+# Plot Confusion Matrix for Dataset C
+disp_E = ConfusionMatrixDisplay(confusion_matrix=confusion_matrix_E)
+disp_E.plot(cmap='Reds', ax=axes[4])
+axes[4].set_title('Confusion Matrix - Dataset E (SVM) (1990s)')
+
+# Plot Confusion Matrix for Dataset D
+disp_F = ConfusionMatrixDisplay(confusion_matrix=confusion_matrix_F)
+disp_F.plot(cmap='Greens', ax=axes[5])
+axes[5].set_title('Confusion Matrix - Dataset F (SVM) (2020s)')
+
+plt.tight_layout()
+plt.show()
+
